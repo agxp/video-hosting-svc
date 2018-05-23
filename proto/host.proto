@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package video_host;
+
+service Host {
+    rpc GetVideoInfo(Request) returns (Response) {}
+    rpc GetVideo(GetVideoRequest) returns (GetVideoResponse) {}
+}
+
+message Request {
+    string id = 1;
+}
+
+message Response {
+    string title = 1;
+	string description = 2;
+	string date_created = 3;
+	uint64 views = 4;
+	uint64 likes = 5;
+	uint64 dislikes = 6;
+	message Resolutions {
+		bool q144p = 1;
+		bool q240p = 2;
+		bool q360p = 3;
+		bool q480p = 4;
+		bool q720p = 5;
+		bool q1080p = 6;
+	}
+	Resolutions resolutions = 7;
+}
+
+message GetVideoRequest {
+    string id = 1;
+    string resolution = 2;
+}
+
+message GetVideoResponse {
+    string presigned_url = 1;
+}
