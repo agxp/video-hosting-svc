@@ -9,10 +9,11 @@ import (
 	"go.uber.org/zap"
 	"log"
 	"time"
+	"os"
 )
 
 type Repository interface {
-	GetVideoInfo(p opentracing.SpanContext, id string) (string, string, string, uint64, uint64, uint64, *pb.Response_Resolutions, error)
+	GetVideoInfo(p opentracing.SpanContext, id string) (*pb.GetVideoInfoResponse, error)
 	GetVideo(p opentracing.SpanContext, id string, resolution string) (string, error)
 }
 
@@ -22,7 +23,9 @@ type HostRepository struct {
 	tracer *opentracing.Tracer
 }
 
-func (repo *HostRepository) GetVideoInfo(parent opentracing.SpanContext, id string) (string, string, string, uint64, uint64, uint64, *pb.Response_Resolutions, error) {
+var THUMB_HOST = os.Getenv("THUMB_HOST")
+
+func (repo *HostRepository) GetVideoInfo(parent opentracing.SpanContext, id string) (*pb.GetVideoInfoResponse, error) {
 	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetVideoInfo_Repo", opentracing.ChildOf(parent))
 
 	sp.LogKV("id", id)
@@ -39,27 +42,43 @@ func (repo *HostRepository) GetVideoInfo(parent opentracing.SpanContext, id stri
 	var views uint64
 	var likes uint64
 	var dislikes uint64
+	var thumbnail_url string
 
 	selectQuery := `select title, description, date_uploaded, view_count, likes, dislikes from videos where id=$1`
 	err := repo.pg.QueryRow(selectQuery, id).Scan(&title, &description, &date_created, &views, &likes, &dislikes)
 	if err != nil {
 		log.Print(err)
 		psSP.Finish()
-		return "", "", "", 0, 0, 0, nil, err
+		return nil, err
 	}
+
+	thumbnail_url = THUMB_HOST + "/" + id + ".jpg"
 
 	psSP.Finish()
 
 	sp.LogKV("title", title)
 	sp.LogKV("description", description)
 	sp.LogKV("date_created", date_created)
-	sp.LogKV("views", views) 				// NOTE: Protobuf does not transmit variables set
-	sp.LogKV("likes", likes) 				// to the default values. Therefore, if views, likes,
-	sp.LogKV("dislikes", dislikes) 		// or dislikes = 0, they will not appear in the response
+	sp.LogKV("views", views)       // NOTE: Protobuf does not transmit variables set
+	sp.LogKV("likes", likes)       // to the default values. Therefore, if views, likes,
+	sp.LogKV("dislikes", dislikes) // or dislikes = 0, they will not appear in the response
+	sp.LogKV("thumbnail_url", thumbnail_url)
 
-	resolutions := &pb.Response_Resolutions{Q720P: true}
+	resolutions := &pb.GetVideoInfoResponse_Resolutions{Q720P: true}
 
-	return title, description, date_created, views, likes, dislikes, resolutions, nil
+	res := &pb.GetVideoInfoResponse{
+		Id:           id,
+		Title:        title,
+		Description:  description,
+		DateCreated:  date_created,
+		Views:        views,
+		Likes:        likes,
+		Dislikes:     dislikes,
+		Resolutions:  resolutions,
+		ThumbnailUrl: thumbnail_url,
+	}
+
+	return res, nil
 }
 
 func (repo *HostRepository) GetVideo(p opentracing.SpanContext, id string, resolution string) (string, error) {
@@ -108,7 +127,6 @@ func (repo *HostRepository) GetVideo(p opentracing.SpanContext, id string, resol
 	}
 
 	s3SP.Finish()
-
 
 	return presignedUrl.String(), nil
 }

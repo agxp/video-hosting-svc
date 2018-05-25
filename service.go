@@ -6,6 +6,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
+	"github.com/micro/protobuf/proto"
 )
 
 type service struct {
@@ -23,31 +24,53 @@ var VALID_RESOLUTIONS = map[string]bool{
 	"1080p": true,
 }
 
-func (srv *service) GetVideoInfo(ctx context.Context, req *pb.Request, res *pb.Response) error {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetVideoInfo_Service")
+func (srv *service) GetVideoInfo(ctx context.Context, req *pb.GetVideoInfoRequest, res *pb.GetVideoInfoResponse) error {
+	sp, _ := opentracing.StartSpanFromContext(ctx, "GetVideoInfo_Service")
 
 	logger.Info("Request for GetVideoInfo_Service received")
 	defer sp.Finish()
 
-	title, description, date_created, views, likes, dislikes, resolutions, err := srv.repo.GetVideoInfo(sp.Context(), req.Id)
+	rsp, err := srv.repo.GetVideoInfo(sp.Context(), req.Id)
 	if err != nil {
 		logger.Error("failed GetVideoInfo", zap.Error(err))
 		return err
 	}
 
-	res.Title = title
-	res.Description = description
-	res.DateCreated = date_created
-	res.Views = views
-	res.Likes = likes
-	res.Dislikes = dislikes
-	res.Resolutions = resolutions
+	data, err := proto.Marshal(rsp)
+	if err != nil {
+		logger.Error("marshal error", zap.String("err", err.Error()))
+	}
+
+	err = proto.Unmarshal(data, res)
+	if err != nil {
+		logger.Error("unmarshal error", zap.String("err", err.Error()))
+	}
+
+	sp.LogKV("rsp_title", rsp.Title)
+	sp.LogKV("rsp_description", rsp.Description)
+	sp.LogKV("rsp_date_created", rsp.DateCreated)
+	sp.LogKV("rsp_views", rsp.Views)       // NOTE: Protobuf does not transmit variables set
+	sp.LogKV("rsp_likes", rsp.Likes)       // to the default values. Therefore, if views, likes,
+	sp.LogKV("rsp_dislikes", rsp.Dislikes) // or dislikes = 0, they will not appear in the response
+	sp.LogKV("rsp_thumbnail_url", rsp.ThumbnailUrl)
+
+	sp.LogKV("res_title", res.Title)
+	sp.LogKV("res_description", res.Description)
+	sp.LogKV("res_date_created", res.DateCreated)
+	sp.LogKV("res_views", res.Views)       // NOTE: Protobuf does not transmit variables set
+	sp.LogKV("res_likes", res.Likes)       // to the default values. Therefore, if views, likes,
+	sp.LogKV("res_dislikes", res.Dislikes) // or dislikes = 0, they will not appear in the response
+	sp.LogKV("res_thumbnail_url", res.ThumbnailUrl)
+
+
+
+
 
 	return nil
 }
 
 func (srv *service) GetVideo(ctx context.Context, req *pb.GetVideoRequest, res *pb.GetVideoResponse) error {
-	sp, _ := opentracing.StartSpanFromContext(context.Background(), "GetVideo_Service")
+	sp, _ := opentracing.StartSpanFromContext(ctx, "GetVideo_Service")
 	logger.Info("Request for GetVideo_Service received")
 	defer sp.Finish()
 

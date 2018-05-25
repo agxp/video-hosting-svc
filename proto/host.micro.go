@@ -8,8 +8,8 @@ It is generated from these files:
 	proto/host.proto
 
 It has these top-level messages:
-	Request
-	Response
+	GetVideoInfoRequest
+	GetVideoInfoResponse
 	GetVideoRequest
 	GetVideoResponse
 */
@@ -44,7 +44,7 @@ var _ server.Option
 // Client API for Host service
 
 type HostClient interface {
-	GetVideoInfo(ctx context.Context, in *Request, opts ...client.CallOption) (*Response, error)
+	GetVideoInfo(ctx context.Context, in *GetVideoInfoRequest, opts ...client.CallOption) (*GetVideoInfoResponse, error)
 	GetVideo(ctx context.Context, in *GetVideoRequest, opts ...client.CallOption) (*GetVideoResponse, error)
 }
 
@@ -66,9 +66,9 @@ func NewHostClient(serviceName string, c client.Client) HostClient {
 	}
 }
 
-func (c *hostClient) GetVideoInfo(ctx context.Context, in *Request, opts ...client.CallOption) (*Response, error) {
+func (c *hostClient) GetVideoInfo(ctx context.Context, in *GetVideoInfoRequest, opts ...client.CallOption) (*GetVideoInfoResponse, error) {
 	req := c.c.NewRequest(c.serviceName, "Host.GetVideoInfo", in)
-	out := new(Response)
+	out := new(GetVideoInfoResponse)
 	err := c.c.Call(ctx, req, out, opts...)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (c *hostClient) GetVideo(ctx context.Context, in *GetVideoRequest, opts ...
 // Server API for Host service
 
 type HostHandler interface {
-	GetVideoInfo(context.Context, *Request, *Response) error
+	GetVideoInfo(context.Context, *GetVideoInfoRequest, *GetVideoInfoResponse) error
 	GetVideo(context.Context, *GetVideoRequest, *GetVideoResponse) error
 }
 
@@ -101,7 +101,7 @@ type Host struct {
 	HostHandler
 }
 
-func (h *Host) GetVideoInfo(ctx context.Context, in *Request, out *Response) error {
+func (h *Host) GetVideoInfo(ctx context.Context, in *GetVideoInfoRequest, out *GetVideoInfoResponse) error {
 	return h.HostHandler.GetVideoInfo(ctx, in, out)
 }
 
