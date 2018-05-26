@@ -63,7 +63,12 @@ func main() {
 		jeagerLogger.Error("Could not connect to database: " + err.Error())
 	}
 
-	repo := &HostRepository{s3, pg, tracer}
+	cache, err := ConnectToRedis()
+	if err != nil {
+		jeagerLogger.Error("Could not connect to cache: " + err.Error())
+	}
+
+	repo := &HostRepository{s3, pg, cache, tracer}
 
 	// Create a new service. Optionally include some options here.
 	srv := micro.NewService(

@@ -7,10 +7,11 @@ import (
 	"github.com/minio/minio-go"
 	"log"
 	"os"
+	"github.com/go-redis/redis"
+
 )
 
 func ConnectToS3() (*minio.Client, error) {
-	log.SetOutput(os.Stdout)
 	endpoint := os.Getenv("MINIO_URL")
 	accessKeyID := os.Getenv("MINIO_ACCESS_KEY")
 	secretAccessKey := os.Getenv("MINIO_SECRET_KEY")
@@ -64,4 +65,23 @@ func ConnectToPostgres() (*sql.DB, error) {
 	log.Print("successfully connected to postgres")
 
 	return db, nil
+}
+
+func ConnectToRedis() (*redis.Client, error) {
+	REDIS_HOST := os.Getenv("REDIS_HOST")
+	REDIS_PASSWORD := os.Getenv("REDIS_PASSWORD")
+	client := redis.NewClient(&redis.Options{
+		Addr: REDIS_HOST,
+		Password: REDIS_PASSWORD,
+		DB: 0,
+	})
+
+	pong, err := client.Ping().Result()
+	if err != nil {
+		log.Fatal("failed to connect to redis", err)
+		return nil, err
+	}
+	log.Print(pong, "successfully connected to redis")
+
+	return client, nil
 }

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: video-host
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: video-host
@@ -31,6 +31,10 @@ spec:
             value: "postgres"
           - name: PG_PASSWORD
             value: "postgres123"
+          - name: REDIS_HOST
+            value: "redis:6379"
+          - name: REDIS_PASSWORD
+            value: ""
           - name: UPDATED_AT
             value: "{{ UPDATED_AT }}"
           - name:  MICRO_REGISTRY
