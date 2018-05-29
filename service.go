@@ -38,12 +38,13 @@ func (srv *service) GetVideoInfo(ctx context.Context, req *pb.GetVideoInfoReques
 
 	data, err := proto.Marshal(rsp)
 	if err != nil {
-		logger.Error("marshal error", zap.String("err", err.Error()))
+		logger.Error("marshal error", zap.Error(err))
 	}
 
 	err = proto.Unmarshal(data, res)
 	if err != nil {
-		logger.Error("unmarshal error", zap.String("err", err.Error()))
+		logger.Error("unmarshal error", zap.Error(err))
+		return err
 	}
 
 	sp.LogKV("rsp_title", rsp.Title)

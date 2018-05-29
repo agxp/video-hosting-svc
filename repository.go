@@ -149,6 +149,9 @@ func (repo *HostRepository) GetVideo(p opentracing.SpanContext, id string, resol
 			dbSP.Finish()
 			return "", err
 		}
+
+		repo.cache.Set(id + resolution, filepath, 0)
+
 		dbSP.Finish()
 
 	} else if err != nil {
