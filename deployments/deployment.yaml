@@ -13,11 +13,28 @@ spec:
         app: video-host
       annotations:
         prometheus.io/scrape: "true"
+        pod.alpha.kubernetes.io/init-containers: '[
+          {
+            "name":"init-sysctl",
+            "image":"busybox:1.27.2",
+            "imagePullPolicy":"IfNotPresent",
+            "command":[
+              "sysctl",
+              "-w",
+              "vm.max_map_count=262144"
+            ],
+            "securityContext":{
+                "privileged":true
+            }
+          }
+        ]'
     spec:
         containers:
         - name: video-host
           image: video_host
           imagePullPolicy: Never
+          securityContext:
+            privileged: true
           env:
           - name: MINIO_URL
             value: "192.168.1.74:30366"
@@ -36,7 +53,7 @@ spec:
           - name: REDIS_PASSWORD
             value: ""
           - name: UPDATED_AT
-            value: "Mon May 28 21:50:53 PDT 2018"
+            value: "Tue May 29 22:41:36 PDT 2018"
           - name:  MICRO_REGISTRY
             value:  kubernetes
           - name: MICRO_SELECTOR

@@ -105,7 +105,7 @@ func (repo *HostRepository) GetVideoInfo(parent opentracing.SpanContext, id stri
 		logger.Info("cacheRes", zap.String("val", val))
 
 		var res pb.GetVideoInfoResponse
-		proto.UnmarshalText(val, &res)
+		proto.Unmarshal([]byte(val), &res)
 
 		return &res, nil
 	}
