@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: video-host
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: video-host
@@ -13,21 +13,6 @@ spec:
         app: video-host
       annotations:
         prometheus.io/scrape: "true"
-        pod.alpha.kubernetes.io/init-containers: '[
-          {
-            "name":"init-sysctl",
-            "image":"busybox:1.27.2",
-            "imagePullPolicy":"IfNotPresent",
-            "command":[
-              "sysctl",
-              "-w",
-              "vm.max_map_count=262144"
-            ],
-            "securityContext":{
-                "privileged":true
-            }
-          }
-        ]'
     spec:
         containers:
         - name: video-host
@@ -37,7 +22,7 @@ spec:
             privileged: true
           env:
           - name: MINIO_URL
-            value: "192.168.1.74:30366"
+            value: "{{ MINIO_URL }}"
           - name: MINIO_ACCESS_KEY
             value: "minio"
           - name: MINIO_SECRET_KEY
